@@ -1,0 +1,73 @@
+/* Rahul Janardhanan
+ Inet - Server
+ */
+// Header Files
+
+import java.io.*; // Package containing standard Input and Output Library
+import java.net.*; // Package containing standard Java_Networking Source, Library
+
+class Worker extends Thread { // This creates a subclass (Worker) from Baseclass(thread) 
+	Socket sock; // Class member sock passed to get Socket connection 
+	Worker (Socket s) {sock = s;} // Parameterized Constructor(), that assigns to class data member of type sock.
+
+ public void run(){         // run function with no return type
+// Formatted I/O streams
+	 PrintStream out = null;  // Setting out &   -- Just to start from first
+	 BufferedReader in = null;		// in to null
+	 try {								// outer block( try - catch )
+		 in = new BufferedReader				// //  Filtered Layers
+				 (new InputStreamReader(sock.getInputStream()));	//invoking new i/p stream and reads from socket i/p stream 
+		 out = new PrintStream(sock.getOutputStream());	//invoking new o/p stream and reads from socket o/p stream 
+
+		 try {								// another try- catch block(inner)
+			 String name;							// string called "name"
+			 name = in.readLine ();				// reading single line of data from client and stored in name
+			 System.out.println("Looking up " + name);   // prints the results and submit to client
+			 printRemoteAddress(name, out);				// pass the output to socket string, variable is out
+		 } catch (IOException x) {   // End of inner block (catch)
+			 System.out.println("Server cannot be read, error");    // When some problems found(exceptions), the appropriate message will get print
+			 x.printStackTrace ();				
+		 }
+		 sock.close(); // For now, client connection will be closed, won't close the server 
+	 } catch (IOException ioe) {System.out.println(ioe);}		// End of outer block
+}
+
+static void printRemoteAddress (String name, PrintStream out) {		// Parameterized function
+	try {
+		out.println("Findingg " + name + "...");		//Gets updated on the server page, message, when client asks 
+		InetAddress machine = InetAddress.getByName (name);	// machine acts as local, instance of InetAddress is initialized with name
+		out.println("My_Host name : " + machine.getHostName ()); // server sends host name message and 
+		out.println("My_Host IP : " + toText (machine.getAddress ()));	//IP addrss to client
+	} catch(UnknownHostException ex) {
+		out.println ("Failure in this case, attempt to find " + name);  // if unknown host exceptions seen, message will be raised.
+	}
+}
+
+// Not interesting to us:
+static String toText (byte ip[]) { /* Make portable for 128 bit format */
+	StringBuffer result = new StringBuffer ();
+	for (int i = 0; i < ip.length; ++ i) {
+		if (i > 0) result.append (".");
+		result.append (0xff & ip[i]);
+	}
+	return result.toString ();
+	}
+}
+
+public class InetServer {
+	
+	public static void main(String a[]) throws IOException {
+		int q_len = 6; /* Not interesting. Number of requests for OpSys to queue */
+		int port = 54321;   /// picked number between 45000 to 65000  -- client and server connect point
+		Socket sock;			//type_socket
+
+		ServerSocket servsock = new ServerSocket(port, q_len);		//  adding new label to  actual class instance, port number & no.of req passed 
+
+		System.out.println
+		("Updated Rahul's Inet_Server 1.8... starting, port.. = 54321. \n");
+		while (true) {
+			sock = servsock.accept(); // waits for the client to connect on port
+			new Worker(sock).start(); // new worker thread and pass that to handle
+		}	
+	}
+}
